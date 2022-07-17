@@ -5,15 +5,31 @@ let buttons = [
     $("#blue"),
 ]
 
-let pattern = [3, 0, 1, 2];
-let patternPressed = "";
-let patternPlayed = "";
-let levelCounter = 1;
-let levelNumber = 1;
-let patternIndex = 0;
-let clickCount = 0;
+let gameInProgress = false;
 
 $(document).on("keypress", function(){
+
+    if (gameInProgress) {
+        console.log("Game is in Progress.");
+    } else {
+        startGame();
+    }
+
+});
+
+
+function startGame() {
+
+    gameInProgress = true;
+
+    let pattern = [3, 0, 1, 2];
+    let patternPressed = "";
+    let patternPlayed = "";
+    let gameLevels = 4;
+    let levelNumber = 1;
+    let patternIndex = 0;
+    let clickCount = 0;
+
     // Change the level heading text
     $("#level-title").text("Level "+ levelNumber);
 
@@ -26,125 +42,64 @@ $(document).on("keypress", function(){
 
     $(".btn").on("click", function(event){
 
+        // Press and play the clicked button
+        let buttonObject = $("#" + event.target.id);
+        pressAndPlay(buttonObject, "press");
+
         // Add to pattern pressed
         patternPressed += event.target.id;
 
         // Increase the click count
         clickCount++;
+        console.log(clickCount);
 
         // Check if the required click count for the game level has reached
+        if (clickCount === levelNumber) {
 
-        if (patternPressed === patternPlayed) {
-            console.log("Go to next level")
-            // Increase the level
-            levelNumber++;
-            patternIndex++;
+            if (patternPressed === patternPlayed) {
 
-            // Change the level heading text
-            $("#level-title").text("Level "+ levelNumber);
+                console.log("Go to next level");
+                // Increase the level
+                levelNumber++;
+                patternIndex++;
 
-            // Iterate through the pattern
-            let buttonObject = buttons[pattern[patternIndex]];
+                if (patternIndex === gameLevels) {
+                    $("#level-title").text("You WON!!!");
+                } else {
 
-            // Play the button sound
-            pressAndPlay(buttonObject, "play");
+                    // Iterate through the pattern
+                    let buttonObject = buttons[pattern[patternIndex]];
 
-            // Add to pattern played
-            patternPlayed += buttonObject[0].id;
+                    // Add to pattern played
+                    patternPlayed += buttonObject[0].id;
 
-            // Add to pattern pressed
-            patternPressed += event.target.id;
+                    // Reset the variables for next level
+                    patternPressed = "";
+                    clickCount = 0;
 
+                    setTimeout(function() {
+                        // Change the level heading text
+                        $("#level-title").text("Level "+ levelNumber);
+                        // Play the button sound
+                        pressAndPlay(buttonObject, "play");
+                    }, 1000);
+
+                }
+
+            } else {
+                gameOver(buttonObject);
+                gameInProgress = false;
+            }
+
+        } else if (clickCount > levelNumber) {
+            gameOver(buttonObject);
+            gameInProgress = false;
         } else {
-            console.log("Game over")
+            console.log("Waiting for required clicks.");
         }
 
     })
-});
-
-
-$(".btn").on("click", function(event) {
-    patternClicked += event.target.id;
-    clickCount++;
-    if (clickCount === 3) {
-        console.log("Clicked 3 times!!!")
-    } else {
-        console.log("Waiting for the number of clicks")
-    }
-})
-
-
-
-// $(".btn").on("click", function(event){
-//
-//     patternPressed += event.target.id;
-//
-//     if (patternPressed !== patternPlayed) {
-//         console.log("Game over");
-//         let targetID = event.target.id;
-//         let buttonObject = $("#" + targetID);
-//         gameOver(buttonObject);
-//
-//     } else {
-//
-//         patternPlayed = "";
-//         patternPressed = "";
-//         let levelNumber = 1;
-//         let patternIndex = 0;
-//
-//         // Change the level heading text
-//         $("#level-title").text("Level "+ levelNumber);
-//
-//         // Iterate through the pattern
-//         let buttonObject = buttons[pattern[patternIndex]];
-//
-//         // Play the button sound
-//         pressAndPlay(buttonObject, "play");
-//
-//         // Add to pattern played
-//         patternPlayed += buttonObject[0].id;
-//
-//         // Add to pattern pressed
-//         patternPressed += patternPressed;
-//
-//         $(".btn").on("click", function(event){
-//             if (patternPressed === patternPlayed) {
-//             console.log("Go to next level")
-//             } else {
-//                 console.log("Game over")
-//             }
-//
-//         })
-
-        // if (patternPressed === patternPlayed) {
-        //     console.log("Go to next level")
-        // } else {
-        //     console.log("Game over")
-        // }
-
-
-        // for (let patternIndex = 0; patternIndex < pattern.length; patternIndex++) {
-        //
-        //     let levelNumber = patternIndex + 1;
-        //
-        //     // Change the level heading text
-        //     $("#level-title").text("Level "+ levelNumber);
-        //
-        //
-        //     // Iterate through the pattern
-        //     let buttonObject = buttons[pattern[patternIndex]];
-        //     // Play the button sound
-        //     pressAndPlay(buttonObject, "play");
-        //     // Add to pattern played
-        //     patternPlayed += buttonObject[0].id;
-        //     // Add to pattern pressed
-        //     patternPressed += patternPressed;
-        //
-        // }
-
-//     }
-//
-// })
+}
 
 
 function gameOver(buttonObject) {
@@ -164,6 +119,7 @@ function gameOver(buttonObject) {
         $("body").removeClass("game-over");
     }, 200);
 }
+
 
 function pressAndPlay(buttonObject, action) {
     let buttonColor = buttonObject[0].id;
