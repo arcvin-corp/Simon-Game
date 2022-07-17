@@ -1,106 +1,133 @@
-let buttons = [
-    $("#green"),
-    $("#red"),
-    $("#yellow"),
-    $("#blue"),
-]
-
 let gameInProgress = false;
 
 $(document).on("keypress", function(){
 
     if (gameInProgress) {
-        console.log("Game is in Progress.");
+        console.log("Game is in progress.")
     } else {
-        startGame();
+        gameInProgress = true;
+        let buttons = [
+        $("#green"),
+        $("#red"),
+        $("#yellow"),
+        $("#blue"),
+        ]
+
+        let patternPressed = "";
+        let patternPlayed = "";
+        let gameLevels = 4;
+        let levelNumber = 1;
+        let patternIndex = 0;
+        let clickCount = 0;
+
+        // Generate a pattern for the game
+        let pattern = [];
+        pattern = patternGenerator(gameLevels);
+
+        // Change the level heading text
+        $("#level-title").text("Level "+ levelNumber);
+
+        // Pick the first button element from the pattern and play the sound.
+        let buttonObject = buttons[pattern[patternIndex]];
+        pressAndPlay(buttonObject, "play");
+
+        // Add to pattern played
+        patternPlayed += buttonObject[0].id;
+
+        let vinay = "";
+
+        if (patternPlayed === "") {
+            vinay = buttons[pattern[0]][0].id;
+        }
+
+        $(".btn").on("click", function(event, vinay){
+
+            patternPlayed = vinay;
+
+            // Press and play the clicked button
+            let buttonObject = $("#" + event.target.id);
+            pressAndPlay(buttonObject, "press");
+
+            // Add to pattern pressed
+            patternPressed += event.target.id;
+
+            // Increase the click count
+            clickCount++;
+
+            // Check if the required click count for the game level has reached
+            if (clickCount === levelNumber) {
+
+                if (patternPressed === patternPlayed) {
+
+                    // Increase the level
+                    levelNumber++;
+                    patternIndex++;
+
+                    if (patternIndex === gameLevels) {
+                        $("#level-title").text("You WON!!! Press any key to restart");
+                        gameInProgress = false;
+                        patternPlayed = "";
+                        patternPressed = "";
+                        clickCount = 0;
+                        levelNumber = 1;
+                        patternIndex = 0;
+                    } else {
+
+                        // Iterate through the pattern
+                        let buttonObject = buttons[pattern[patternIndex]];
+
+                        // Add to pattern played
+                        patternPlayed += buttonObject[0].id;
+
+                        // Reset the variables for next level
+                        patternPressed = "";
+                        clickCount = 0;
+
+                        setTimeout(function() {
+                            // Change the level heading text
+                            $("#level-title").text("Level "+ levelNumber);
+                            // Play the button sound
+                            pressAndPlay(buttonObject, "play");
+                        }, 1000);
+
+                    }
+
+                } else {
+                    gameOver(buttonObject);
+                    gameInProgress = false;
+                    patternPlayed = "";
+                    patternPressed = "";
+                    clickCount = 0;
+                    levelNumber = 1;
+                    patternIndex = 0;
+                }
+
+            } else if (clickCount > levelNumber) {
+                gameOver(buttonObject);
+                gameInProgress = false;
+                patternPlayed = "";
+                patternPressed = "";
+                clickCount = 0;
+                levelNumber = 1;
+                patternIndex = 0;
+            } else {
+                console.log("Waiting for required clicks.");
+            }
+
+        })
+
     }
+
 
 });
 
-
-function startGame() {
-
-    gameInProgress = true;
-
-    let pattern = [3, 0, 1, 2];
-    let patternPressed = "";
-    let patternPlayed = "";
-    let gameLevels = 4;
-    let levelNumber = 1;
-    let patternIndex = 0;
-    let clickCount = 0;
-
-    // Change the level heading text
-    $("#level-title").text("Level "+ levelNumber);
-
-    // Pick the first button element from the pattern and play the sound.
-    let buttonObject = buttons[pattern[patternIndex]];
-    pressAndPlay(buttonObject, "play");
-
-    // Add to pattern played
-    patternPlayed += buttonObject[0].id;
-
-    $(".btn").on("click", function(event){
-
-        // Press and play the clicked button
-        let buttonObject = $("#" + event.target.id);
-        pressAndPlay(buttonObject, "press");
-
-        // Add to pattern pressed
-        patternPressed += event.target.id;
-
-        // Increase the click count
-        clickCount++;
-        console.log(clickCount);
-
-        // Check if the required click count for the game level has reached
-        if (clickCount === levelNumber) {
-
-            if (patternPressed === patternPlayed) {
-
-                console.log("Go to next level");
-                // Increase the level
-                levelNumber++;
-                patternIndex++;
-
-                if (patternIndex === gameLevels) {
-                    $("#level-title").text("You WON!!!");
-                } else {
-
-                    // Iterate through the pattern
-                    let buttonObject = buttons[pattern[patternIndex]];
-
-                    // Add to pattern played
-                    patternPlayed += buttonObject[0].id;
-
-                    // Reset the variables for next level
-                    patternPressed = "";
-                    clickCount = 0;
-
-                    setTimeout(function() {
-                        // Change the level heading text
-                        $("#level-title").text("Level "+ levelNumber);
-                        // Play the button sound
-                        pressAndPlay(buttonObject, "play");
-                    }, 1000);
-
-                }
-
-            } else {
-                gameOver(buttonObject);
-                gameInProgress = false;
-            }
-
-        } else if (clickCount > levelNumber) {
-            gameOver(buttonObject);
-            gameInProgress = false;
-        } else {
-            console.log("Waiting for required clicks.");
-        }
-
-    })
+function patternGenerator(gameLevels) {
+    let pattern = [];
+    for (let i = 0; i < gameLevels; i ++) {
+        pattern.push(Math.floor(Math.random() * gameLevels));
+    }
+    return pattern;
 }
-
 
 function gameOver(buttonObject) {
     // Play button sound with press animation
