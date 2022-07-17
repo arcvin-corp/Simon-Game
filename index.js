@@ -11,29 +11,50 @@ let patternPlayed = "";
 let levelCounter = 1;
 let levelNumber = 1;
 let patternIndex = 0;
-
-// Change the level heading text
-$("#level-title").text("Level "+ levelNumber);
-
-// Iterate through the pattern
-let buttonObject = buttons[pattern[patternIndex]];
+let clickCount = 0;
 
 $(document).on("keypress", function(){
-    // Play the button sound
+    // Change the level heading text
+    $("#level-title").text("Level "+ levelNumber);
+
+    // Pick the first button element from the pattern and play the sound.
+    let buttonObject = buttons[pattern[patternIndex]];
     pressAndPlay(buttonObject, "play");
 
     // Add to pattern played
     patternPlayed += buttonObject[0].id;
-
-
 
     $(".btn").on("click", function(event){
 
         // Add to pattern pressed
         patternPressed += event.target.id;
 
+        // Increase the click count
+        clickCount++;
+
+        // Check if the required click count for the game level has reached
+
         if (patternPressed === patternPlayed) {
-        console.log("Go to next level")
+            console.log("Go to next level")
+            // Increase the level
+            levelNumber++;
+            patternIndex++;
+
+            // Change the level heading text
+            $("#level-title").text("Level "+ levelNumber);
+
+            // Iterate through the pattern
+            let buttonObject = buttons[pattern[patternIndex]];
+
+            // Play the button sound
+            pressAndPlay(buttonObject, "play");
+
+            // Add to pattern played
+            patternPlayed += buttonObject[0].id;
+
+            // Add to pattern pressed
+            patternPressed += event.target.id;
+
         } else {
             console.log("Game over")
         }
@@ -42,6 +63,15 @@ $(document).on("keypress", function(){
 });
 
 
+$(".btn").on("click", function(event) {
+    patternClicked += event.target.id;
+    clickCount++;
+    if (clickCount === 3) {
+        console.log("Clicked 3 times!!!")
+    } else {
+        console.log("Waiting for the number of clicks")
+    }
+})
 
 
 
