@@ -1,166 +1,233 @@
+// Number of buttons in the game
+const numberOfButtons = 4;
+
+// Number of levels in the game
+const gameLevels = 6;
+
+// Variable to check if the game is in progress (to prevent game restart when in progress)
 let gameInProgress = false;
 
-$(document).on("keypress", function(){
+// Variable for keeping track of the current game level
+let currentGameLevel = 1;
 
-    if (gameInProgress) {
-        console.log("Game is in progress.")
-    } else {
-        gameInProgress = true;
-        let buttons = [
-        $("#green"),
-        $("#red"),
-        $("#yellow"),
-        $("#blue"),
-        ]
+// Variable keeping track of pattern played by the program
+let patternPlayedByComputer = "";
 
-        let patternPressed = "";
-        let patternPlayed = "";
-        let gameLevels = 4;
-        let levelNumber = 1;
-        let patternIndex = 0;
-        let clickCount = 0;
+// Variable for keeping track of pattern played by the player
+let patternPlayedByPlayer = "";
 
-        // Generate a pattern for the game
-        let pattern = [];
-        pattern = patternGenerator(gameLevels);
+// Variable for keeping track of click counts needed for each game level
+let clickCount = 0;
 
-        // Change the level heading text
-        $("#level-title").text("Level "+ levelNumber);
+// Pattern array
+let pattern = [];
 
-        // Pick the first button element from the pattern and play the sound.
-        let buttonObject = buttons[pattern[patternIndex]];
-        pressAndPlay(buttonObject, "play");
+// Pattern starting index
+let pIndex = 0;
 
-        // Add to pattern played
-        patternPlayed += buttonObject[0].id;
+// Initialize button objects
+let buttons = [
+    $("#green"),
+    $("#red"),
+    $("#yellow"),
+    $("#blue"),
+]
 
-        let vinay = "";
 
-        if (patternPlayed === "") {
-            vinay = buttons[pattern[0]][0].id;
+// Main program entry point
+$(function () {
+
+    // Main program entry point. Detects any keypress event on the entire document or body
+    $(document).on("keypress", function() {
+        if (gameInProgress) {
+            console.log("Game is in progress!")
+        } else {
+            resetGame();
+            console.log("Game has started.")
+            startGame();
         }
-
-        $(".btn").on("click", function(event, vinay){
-
-            patternPlayed = vinay;
-
-            // Press and play the clicked button
-            let buttonObject = $("#" + event.target.id);
-            pressAndPlay(buttonObject, "press");
-
-            // Add to pattern pressed
-            patternPressed += event.target.id;
-
-            // Increase the click count
-            clickCount++;
-
-            // Check if the required click count for the game level has reached
-            if (clickCount === levelNumber) {
-
-                if (patternPressed === patternPlayed) {
-
-                    // Increase the level
-                    levelNumber++;
-                    patternIndex++;
-
-                    if (patternIndex === gameLevels) {
-                        $("#level-title").text("You WON!!! Press any key to restart");
-                        gameInProgress = false;
-                        patternPlayed = "";
-                        patternPressed = "";
-                        clickCount = 0;
-                        levelNumber = 1;
-                        patternIndex = 0;
-                    } else {
-
-                        // Iterate through the pattern
-                        let buttonObject = buttons[pattern[patternIndex]];
-
-                        // Add to pattern played
-                        patternPlayed += buttonObject[0].id;
-
-                        // Reset the variables for next level
-                        patternPressed = "";
-                        clickCount = 0;
-
-                        setTimeout(function() {
-                            // Change the level heading text
-                            $("#level-title").text("Level "+ levelNumber);
-                            // Play the button sound
-                            pressAndPlay(buttonObject, "play");
-                        }, 1000);
-
-                    }
-
-                } else {
-                    gameOver(buttonObject);
-                    gameInProgress = false;
-                    patternPlayed = "";
-                    patternPressed = "";
-                    clickCount = 0;
-                    levelNumber = 1;
-                    patternIndex = 0;
-                }
-
-            } else if (clickCount > levelNumber) {
-                gameOver(buttonObject);
-                gameInProgress = false;
-                patternPlayed = "";
-                patternPressed = "";
-                clickCount = 0;
-                levelNumber = 1;
-                patternIndex = 0;
-            } else {
-                console.log("Waiting for required clicks.");
-            }
-
-        })
-
-    }
-
+    })
 
 });
 
-function patternGenerator(gameLevels) {
+
+/**
+ * Function to start the game
+ */
+const startGame = () => {
+
+    // Set the variable to true to prevent game reset when it is in progress.
+    gameInProgress = true;
+
+    // Generate a new pattern for the game
+    pattern = patternGenerator();
+
+    // Select the first element from buttons object and play the sound
+    // Play button sound without press animation.
+    let buttonObject = buttons[pattern[pIndex]];
+    let buttonObjectId = buttonObject.attr("id");
+    setTimeout(function() {
+        // Change the level heading text
+        $("#level-title").text("Level "+ currentGameLevel);
+        playSound(buttonObject, buttonObjectId);
+    }, 500);
+
+    // Add to patternPlayedByComputer string variable.
+    patternPlayedByComputer += buttonObjectId;
+
+    // Wait for and detect a button click from the player
+    $(".btn").off("click").on("click", function(event){
+
+        // Play button sound with a press animation.
+        let buttonObject = $(event.target);
+        let buttonObjectId = buttonObject.attr("id");
+        playSound(buttonObject, buttonObjectId, true);
+
+        // Add to patternPlayedByPlayer string variable.
+        patternPlayedByPlayer += buttonObjectId;
+
+        // Increment the click count
+        clickCount++;
+
+        // Check if the required click count has been reached
+        // Click count is equal to the currentGameLevel count
+        if (clickCount === currentGameLevel) {
+
+            // Check if pattern played by the computer and user is the same
+            if (patternPlayedByPlayer === patternPlayedByComputer) {
+
+                // Increment currentGameLevel counter
+                currentGameLevel++;
+
+                // Increment the index of pattern array
+                pIndex++;
+
+                // Check if the pIndex value has reached the length of pattern array
+                // If it has reached, then all the levels are completed and the play has won
+                if (pIndex === gameLevels) {
+
+                    // All levels done, game won
+                    showGameResult(buttonObject, true);
+                    resetGame();
+                } else {
+
+                    // Iterate through the pattern
+                    let buttonObject = buttons[pattern[pIndex]];
+                    let buttonObjectId = buttonObject.attr("id");
+
+                    // Add to patternPlayedByComputer string variable.
+                    patternPlayedByComputer += buttonObjectId;
+
+                    // Reset the variable for next level
+                    patternPlayedByPlayer = "";
+                    clickCount = 0;
+
+                    // Play button sound without press animation amd change level heading text
+                    setTimeout(function() {
+                        // Change the level heading text
+                        $("#level-title").text("Level "+ currentGameLevel);
+                        playSound(buttonObject, buttonObjectId);
+                    }, 1000);
+
+
+                }
+
+            } else {
+                // Game lost
+                showGameResult(buttonObject, false);
+                resetGame();
+            }
+
+        } else if (clickCount > currentGameLevel) {
+            // More buttons clicked than required
+            showGameResult(buttonObject, false);
+            resetGame();
+        } else {
+            // Wait for the required number of clicks to be done by the player
+            console.log("Waiting for required number of clicks: " + clickCount + "/" + currentGameLevel);
+        }
+
+    });
+
+}
+
+
+/**
+ * Function to generate an array (game pattern) with random integers
+ */
+const patternGenerator = () => {
     let pattern = [];
-    for (let i = 0; i < gameLevels; i ++) {
-        pattern.push(Math.floor(Math.random() * gameLevels));
+    for (let i = 0; i < gameLevels; i++) {
+        let randomNumber = Math.floor(Math.random() * numberOfButtons);
+        pattern.push(randomNumber)
     }
     return pattern;
 }
 
-function gameOver(buttonObject) {
-    // Play button sound with press animation
-    pressAndPlay(buttonObject, "press");
 
-    // Play game-over sound
-    let gameOverAudio = new Audio("sounds/wrong.mp3");
-    gameOverAudio.play();
+/**
+ * Function to play the select button sound
+ * @param {Object} buttonObject                 jQuery button object
+ * @param {String} buttonObjectId               CSS ID of the button object
+ * @param {(boolean|string)=} pressAnimation    Show press animation when set to true
+ */
+const playSound = (buttonObject, buttonObjectId, pressAnimation= false) => {
+    let filePath = "sounds/" + buttonObjectId + ".mp3";
+    let button = new Audio(filePath);
 
-    // Change heading text
-    $("#level-title").text("Game Over, Press Any Key to Restart");
-
-    // Apply red background class to body
-    $("body").addClass("game-over");
-    setTimeout(function(){
-        $("body").removeClass("game-over");
-    }, 200);
-}
-
-
-function pressAndPlay(buttonObject, action) {
-    let buttonColor = buttonObject[0].id;
-    let audio = new Audio("sounds/" + buttonColor + ".mp3");
-    audio.play();
-
-    if (action === "play") {
-        buttonObject.animate({opacity: 0}, 200, function(){
-            buttonObject.animate({opacity: 1}, 100);
-        })
-    } else if (action === "press") {
+    if (pressAnimation) {
         buttonObject.addClass("pressed");
         setTimeout(function(){
+            button.play();
             buttonObject.removeClass("pressed");
-        }, 50);
+        }, 100);
+    } else {
+        buttonObject.animate({opacity: 0}, 100, function() {
+            button.play();
+            buttonObject.animate({opacity: 1}, 300)
+        })
     }
 }
+
+
+/**
+ * Function to show game over animation
+ * @param {Object} buttonObject         jQuery button object
+ * @param {(boolean|string)=} result    Set to true when the game is won
+ */
+const showGameResult = (buttonObject, result) => {
+
+    // Remove the click event listener
+    $(".btn").off("click");
+
+    let resultText = result ? "You WON the game!!! Press any key to restart" : "Game Over, Press Any Key to Restart";
+    let fileName = result ? "sounds/right.mp3" : "sounds/wrong.mp3";
+    let cssClass = result ? "game-won" : "game-over";
+    let resultAudio = new Audio(fileName);
+    resultAudio.play();
+
+    // Change title and play appropriate sound
+    $("#level-title").text(resultText);
+    $("body").addClass(cssClass);
+    setTimeout(function() {
+        $("body").removeClass(cssClass);
+    }, 2000);
+}
+
+
+/**
+ * Function to reset the game and set all variables to their initial values.
+ * Use when restarting the game, game-over and game-won conditions
+ */
+const resetGame = () => {
+    console.log("Game has been reset.")
+
+    gameInProgress = false;
+    currentGameLevel = 1;
+    patternPlayedByComputer = "";
+    patternPlayedByPlayer = "";
+    clickCount = 0;
+    pattern = [];
+    pIndex = 0;
+}
+
